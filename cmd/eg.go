@@ -16,4 +16,10 @@ func main() {
 	}
 
 	c.Start()
+
+	c.IterateFinished(func(t lp.Task) {
+		if t2, ok := t.(*MyTask2); ok {
+			fmt.Println(t2.id)
+		}
+	})
 }

@@ -8,8 +8,9 @@ const (
 )
 
 type Controller struct {
-	pools  []*Pool
-	status []kPoolStatus
+	pools    []*Pool
+	status   []kPoolStatus
+	finished []Task
 }
 
 func NewController(cfgs ...PoolConfig) *Controller {
@@ -71,5 +72,11 @@ main:
 				c.status[idx] = kPoolStatusBusy
 			}
 		}
+	}
+}
+
+func (c *Controller) IterateFinished(f func(task Task)) {
+	for _, task := range c.finished {
+		f(task)
 	}
 }

@@ -35,6 +35,8 @@ func newWorker(controller *Controller, pool *Pool, poolIdx int, busyChan chan in
 			if n != nil {
 				p := controller.getPool(n.GetPoolID())
 				p.addTask(n)
+			} else {
+				controller.finished = append(controller.finished, task)
 			}
 		}
 	}

@@ -41,7 +41,7 @@ func (t *MyTask1) Run() lp.TaskResult {
 	a := struct {
 		Name string
 	}{
-		Name: "wang linan",
+		Name: "hu jing",
 	}
 
 	w := bytes.NewBufferString("")
