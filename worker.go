@@ -5,12 +5,12 @@ import (
 	"time"
 )
 
-func newWorker(controller *Controller, pool *Pool, poolIdx int, busyChan chan int, idleChan chan int) {
+func newWorker[T Task](controller *Controller[T], pool *Pool, poolIdx int, busyChan chan int, idleChan chan int) {
 	for {
 		task := pool.takeTask()
 		if task == nil {
-			idleChan <- poolIdx
 			time.Sleep(time.Millisecond * 100)
+			idleChan <- poolIdx
 			continue
 		}
 
@@ -36,8 +36,17 @@ func newWorker(controller *Controller, pool *Pool, poolIdx int, busyChan chan in
 				p := controller.getPool(n.GetPoolID())
 				p.addTask(n)
 			} else {
-				controller.finished = append(controller.finished, task)
+				f, ok := task.(T)
+				if ok {
+					controller.appendFinished(f)
+				} else {
+					log.Printf("Not able to add %s to finished.", task.ID())
+				}
 			}
 		}
+
+		// if !pool.hasMore() {
+		// 	idleChan <- poolIdx
+		// }
 	}
 }

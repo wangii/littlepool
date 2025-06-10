@@ -7,19 +7,21 @@ import (
 )
 
 func main() {
-	c := lp.NewController(lp.PoolConfig{ConcurrencyLimit: 5, ID: "pool1"},
+	c := lp.NewController[*MyTask2](lp.PoolConfig{ConcurrencyLimit: 5, ID: "pool1"},
 		lp.PoolConfig{ConcurrencyLimit: 2, ID: "pool2"},
 	)
 
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		c.Add(newMyTask1(fmt.Sprintf("task1-%d", i)))
 	}
 
 	c.Start()
 
-	c.IterateFinished(func(t lp.Task) {
-		if t2, ok := t.(*MyTask2); ok {
-			fmt.Println(t2.id)
-		}
-	})
+	// c.IterateFinished(func(t *MyTask2) {
+	// 	fmt.Println(t.id)
+	// })
+
+	for _, t := range c.GetFinished() {
+		fmt.Println(t.ID())
+	}
 }

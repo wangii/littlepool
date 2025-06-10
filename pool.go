@@ -29,14 +29,6 @@ func (p *Pool) addTask(task Task) {
 	p.tasks = append(p.tasks, task)
 }
 
-func (p *Pool) batchAdd(tasks []Task) {
-
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	p.tasks = append(p.tasks, tasks...)
-}
-
 func (p *Pool) takeTask() Task {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -47,4 +39,11 @@ func (p *Pool) takeTask() Task {
 		return task
 	}
 	return nil
+}
+
+func (p *Pool) hasMore() bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	return len(p.tasks) > 0
 }

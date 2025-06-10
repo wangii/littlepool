@@ -1,33 +1,39 @@
 package littlepool
 
-type kPoolStatus int
+import "sync"
+
+type kWorkerStatus int
 
 const (
-	kPoolStatusIdle kPoolStatus = iota
-	kPoolStatusBusy
+	kWorkerStatusIdle kWorkerStatus = iota
+	kWorkerStatusBusy
 )
 
-type Controller struct {
+type Controller[T Task] struct {
 	pools    []*Pool
-	status   []kPoolStatus
-	finished []Task
+	status   []kWorkerStatus
+	muFinish sync.Mutex
+	finished []T
 }
 
-func NewController(cfgs ...PoolConfig) *Controller {
-	ret := &Controller{}
+func NewController[T Task](cfgs ...PoolConfig) *Controller[T] {
+	ret := &Controller[T]{}
+
+	nWorker := 0
 	for _, cfg := range cfgs {
 		ret.pools = append(ret.pools, NewPool(cfg))
+		nWorker += cfg.ConcurrencyLimit
 	}
-	ret.status = make([]kPoolStatus, len(cfgs))
+	ret.status = make([]kWorkerStatus, nWorker)
 
-	for idx := range ret.status {
-		ret.status[idx] = kPoolStatusBusy
+	for idx := range nWorker {
+		ret.status[idx] = kWorkerStatusBusy
 	}
 
 	return ret
 }
 
-func (c *Controller) getPool(id string) *Pool {
+func (c *Controller[T]) getPool(id string) *Pool {
 	for _, p := range c.pools {
 		if p.config.ID == id {
 			return p
@@ -36,7 +42,7 @@ func (c *Controller) getPool(id string) *Pool {
 	return nil
 }
 
-func (c *Controller) Add(task Task) {
+func (c *Controller[T]) Add(task Task) {
 	pool := c.getPool(task.GetPoolID())
 	if pool == nil {
 		panic("No pool found for task")
@@ -44,7 +50,7 @@ func (c *Controller) Add(task Task) {
 	pool.addTask(task)
 }
 
-func (c *Controller) Start() {
+func (c *Controller[T]) Start() {
 	busyChan := make(chan int)
 	idleChan := make(chan int)
 
@@ -59,24 +65,42 @@ main:
 		select {
 		case idx := <-idleChan:
 			{
-				c.status[idx] = kPoolStatusIdle
+				c.status[idx] = kWorkerStatusIdle
 				for i := range len(c.pools) {
-					if c.status[i] == kPoolStatusBusy {
+					if c.status[i] == kWorkerStatusBusy {
 						continue main
 					}
 				}
+
+				for _, p := range c.pools {
+					if p.hasMore() {
+						continue main
+					}
+				}
+
 				break main
 			}
 		case idx := <-busyChan:
 			{
-				c.status[idx] = kPoolStatusBusy
+				c.status[idx] = kWorkerStatusBusy
 			}
 		}
 	}
 }
 
-func (c *Controller) IterateFinished(f func(task Task)) {
+func (c *Controller[T]) appendFinished(task T) {
+	c.muFinish.Lock()
+	defer c.muFinish.Unlock()
+
+	c.finished = append(c.finished, task)
+}
+
+func (c *Controller[T]) IterateFinished(f func(task T)) {
 	for _, task := range c.finished {
 		f(task)
 	}
+}
+
+func (c *Controller[T]) GetFinished() []T {
+	return c.finished
 }
