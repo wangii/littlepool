@@ -66,7 +66,7 @@ main:
 		case idx := <-idleChan:
 			{
 				c.status[idx] = kWorkerStatusIdle
-				for i := range len(c.pools) {
+				for i := range len(c.status) {
 					if c.status[i] == kWorkerStatusBusy {
 						continue main
 					}
