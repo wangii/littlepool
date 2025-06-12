@@ -15,8 +15,13 @@ func newWorker[T Task](controller *Controller[T], pool *Pool, poolIdx int, busyC
 		}
 
 		busyChan <- poolIdx
-		log.Printf("start task %s, from pool %s", task.ID(), pool.config.ID)
+		if dt, ok := task.(DependentTask); ok && dt.HasPendingDependency() {
+			log.Printf("task %s in pool %s has pending dependency, wait", task.ID(), pool.config.ID)
+			pool.addTask(task)
+			continue
+		}
 
+		log.Printf("start task %s, from pool %s", task.ID(), pool.config.ID)
 		ret := task.Run()
 
 		if TaskResultFailedAbort == ret {
@@ -30,11 +35,13 @@ func newWorker[T Task](controller *Controller[T], pool *Pool, poolIdx int, busyC
 
 		if TaskResultSuccess == ret {
 			log.Printf("task %s in pool %s success", task.ID(), pool.config.ID)
-			n := task.Next()
+			ns := task.Next()
 
-			if n != nil {
-				p := controller.getPool(n.GetPoolID())
-				p.addTask(n)
+			if len(ns) > 0 {
+				for _, n := range ns {
+					p := controller.getPool(n.GetPoolID())
+					p.addTask(n)
+				}
 			} else {
 				f, ok := task.(T)
 				if ok {
@@ -45,8 +52,5 @@ func newWorker[T Task](controller *Controller[T], pool *Pool, poolIdx int, busyC
 			}
 		}
 
-		// if !pool.hasMore() {
-		// 	idleChan <- poolIdx
-		// }
 	}
 }

@@ -51,6 +51,6 @@ func (t *MyTask1) Run() lp.TaskResult {
 	return lp.TaskResultSuccess
 }
 
-func (t *MyTask1) Next() lp.Task {
-	return newMyTask2(t.id + "-S2")
+func (t *MyTask1) Next() []lp.Task {
+	return []lp.Task{newMyTask2(t.id + "-S2")}
 }

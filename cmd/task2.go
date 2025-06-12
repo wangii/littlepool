@@ -29,6 +29,6 @@ func (t *MyTask2) Run() lp.TaskResult {
 	return lp.TaskResultSuccess
 }
 
-func (t *MyTask2) Next() lp.Task {
-	return nil
+func (t *MyTask2) Next() []lp.Task {
+	return []lp.Task{}
 }

@@ -13,5 +13,9 @@ type Task interface {
 	GetPoolID() string
 
 	Run() TaskResult
-	Next() Task
+	Next() []Task
+}
+
+type DependentTask interface {
+	HasPendingDependency() bool
 }
