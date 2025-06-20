@@ -2,8 +2,6 @@ package main
 
 import (
 	"bytes"
-	_ "embed"
-	"html/template"
 	"log"
 	"time"
 
@@ -12,15 +10,6 @@ import (
 
 type MyTask1 struct {
 	id string
-}
-
-//go:embed prompts/task1.md
-var templateText string
-var tpTask1 *template.Template
-
-func init() {
-	log.Print(templateText)
-	tpTask1 = template.Must(template.New("task1").Parse(templateText))
 }
 
 func newMyTask1(id string) *MyTask1 {
@@ -45,7 +34,7 @@ func (t *MyTask1) Run() lp.TaskResult {
 	}
 
 	w := bytes.NewBufferString("")
-	_ = tpTask1.Execute(w, a)
+	_ = getTemplate().Execute(w, a)
 	log.Print(w.String())
 
 	return lp.TaskResultSuccess
