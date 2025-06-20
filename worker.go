@@ -5,16 +5,16 @@ import (
 	"time"
 )
 
-func newWorker[T Task](controller *Controller[T], pool *Pool, poolIdx int, busyChan chan int, idleChan chan int) {
+func newWorker[T Task](controller *Controller[T], pool *Pool, workerIdx int, busyChan chan int, idleChan chan int) {
 	for {
 		task := pool.takeTask()
 		if task == nil {
 			time.Sleep(time.Millisecond * 100)
-			idleChan <- poolIdx
+			idleChan <- workerIdx
 			continue
 		}
 
-		busyChan <- poolIdx
+		busyChan <- workerIdx
 		log.Printf("start task %s, from pool %s", task.ID(), pool.config.ID)
 
 		ret := task.Run()
@@ -44,9 +44,5 @@ func newWorker[T Task](controller *Controller[T], pool *Pool, poolIdx int, busyC
 				}
 			}
 		}
-
-		// if !pool.hasMore() {
-		// 	idleChan <- poolIdx
-		// }
 	}
 }

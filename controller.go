@@ -54,9 +54,11 @@ func (c *Controller[T]) Start() {
 	busyChan := make(chan int)
 	idleChan := make(chan int)
 
-	for idx, p := range c.pools {
+	workerIdx := 0
+	for _, p := range c.pools {
 		for range p.config.ConcurrencyLimit {
-			go newWorker(c, p, idx, busyChan, idleChan)
+			go newWorker(c, p, workerIdx, busyChan, idleChan)
+			workerIdx++
 		}
 	}
 
